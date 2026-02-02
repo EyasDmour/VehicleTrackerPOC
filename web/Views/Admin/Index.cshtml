@@ -1,0 +1,114 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<!-- Stats Grid -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--primary">
+                <span class="material-symbols-outlined">directions_car</span>
+            </div>
+            <div class="stat-card__value" id="stat-vehicles">-</div>
+            <div class="stat-card__label">Total Vehicles</div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--success">
+                <span class="material-symbols-outlined">badge</span>
+            </div>
+            <div class="stat-card__value" id="stat-drivers">-</div>
+            <div class="stat-card__label">Total Drivers</div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--warning">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div class="stat-card__value" id="stat-incidents">-</div>
+            <div class="stat-card__label">Active Incidents</div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--danger">
+                <span class="material-symbols-outlined">group</span>
+            </div>
+            <div class="stat-card__value" id="stat-users">-</div>
+            <div class="stat-card__label">System Users</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="admin-card">
+    <div class="admin-card__header">
+        <h2 class="admin-card__title">Recent Vehicles</h2>
+        <a href="/Admin/Vehicles" class="btn btn-admin-secondary">View All</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-admin">
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Plate Number</th>
+                    <th>Driver</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="recent-vehicles">
+                <tr>
+                    <td colspan="4" class="text-center py-4">
+                        <div class="spinner-admin mx-auto"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Load stats
+        const [vehicles, drivers, incidents] = await Promise.all([
+            VehiclesAPI.getAll(),
+            DriversAPI.getAll(),
+            IncidentsAPI.getAll()
+        ]);
+        
+        document.getElementById('stat-vehicles').textContent = vehicles.length;
+        document.getElementById('stat-drivers').textContent = drivers.length;
+        document.getElementById('stat-incidents').textContent = incidents.filter(i => 
+            i.incidentStatus?.statusName !== 'Resolved' && 
+            i.incidentStatus?.statusName !== 'Cancelled'
+        ).length;
+        document.getElementById('stat-users').textContent = '1'; // Will update when we have users API
+        
+        // Render recent vehicles
+        const tbody = document.getElementById('recent-vehicles');
+        if (vehicles.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No vehicles found</td></tr>';
+        } else {
+            tbody.innerHTML = vehicles.slice(0, 5).map(v => `
+                <tr>
+                    <td><strong>${v.make || ''} ${v.model || ''}</strong></td>
+                    <td>${v.plateNumber || '-'}</td>
+                    <td>${v.currentDriver ? v.currentDriver.firstName + ' ' + v.currentDriver.lastName : '<span class="text-muted">-</span>'}</td>
+                    <td><span class="badge badge-admin badge-admin-success">Active</span></td>
+                </tr>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+    }
+});
+</script>
+}

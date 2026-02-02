@@ -1,0 +1,47 @@
+# Server deployment compose - pull and run only
+# Usage:
+#   Pull:   docker compose -f docker-compose.server.yml pull
+#   Run:    docker compose -f docker-compose.server.yml up -d
+#   Stop:   docker compose -f docker-compose.server.yml down
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-vehicle_tracker}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_NAME:-vehicle_tracker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ghcr.io/eyasdmour/vehicletracker-api:latest
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=db;Database=${DB_NAME:-vehicle_tracker};Username=${DB_USER:-user};Password=${DB_PASSWORD:-password}
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/eyasdmour/vehicletracker-web:latest
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ApiBaseUrl=http://api:5000
+    ports:
+      - "5001:5001"
+    depends_on:
+      - api
+
+volumes:
+  db_data:

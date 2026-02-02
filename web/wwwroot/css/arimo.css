@@ -1,0 +1,37 @@
+/* Arimo Font (Self-hosted) */
+
+/* Regular (400) */
+@font-face {
+    font-family: 'Arimo';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/arimo-regular.ttf') format('truetype');
+}
+
+/* Medium (500) */
+@font-face {
+    font-family: 'Arimo';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/arimo-medium.ttf') format('truetype');
+}
+
+/* SemiBold (600) */
+@font-face {
+    font-family: 'Arimo';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/arimo-semibold.ttf') format('truetype');
+}
+
+/* Bold (700) */
+@font-face {
+    font-family: 'Arimo';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/arimo-bold.ttf') format('truetype');
+}

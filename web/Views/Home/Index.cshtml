@@ -1,0 +1,365 @@
+@{
+    ViewData["Title"] = "Live Tracking";
+}
+
+<partial name="_Navbar" />
+
+<!-- Main Content Area -->
+<div class="main-container">
+    <!-- Vehicles Sidebar -->
+    <div class="offcanvas offcanvas-start border-end" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="vehicles-sidebar" aria-labelledby="vehiclesLabel">
+        <div class="offcanvas-header border-bottom px-4 py-3">
+            <div>
+                <h5 class="offcanvas-title fw-bold text-dark" id="vehiclesLabel">Vehicles</h5>
+                <p class="sidebar__subtitle text-muted small mb-0">5 available</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-3">
+            <div class="vehicle-list">
+                <!-- Vehicle list items will be rendered by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Incidents Sidebar -->
+    <div class="offcanvas offcanvas-start border-end" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="incidents-sidebar" aria-labelledby="incidentsLabel">
+        <div class="offcanvas-header border-bottom px-4 py-3">
+            <div>
+                <h5 class="offcanvas-title fw-bold text-dark" id="incidentsLabel">Incidents</h5>
+                <p class="sidebar__subtitle text-muted small mb-0">3 active</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-3">
+            <div class="incident-list">
+                <!-- Incident list items will be rendered by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Map Container -->
+    <div class="map-container position-relative h-100">
+        <div id="map"></div>
+        
+        <!-- Map Controls - Right -->
+        <div class="map-controls map-controls--top-right d-flex flex-column gap-2">
+            <button id="btn-zoom-in" class="btn btn-light shadow-sm p-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;" title="Zoom In">
+                <span class="material-symbols-outlined">add</span>
+            </button>
+            <button id="btn-zoom-out" class="btn btn-light shadow-sm p-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;" title="Zoom Out">
+                <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button id="btn-locate" class="btn btn-light shadow-sm p-0 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;" title="My Location">
+                <span class="material-symbols-outlined">my_location</span>
+            </button>
+        </div>
+        
+        <!-- Vehicle Popup (hidden by default) -->
+        <div id="vehicle-popup" class="vehicle-popup d-none">
+            <div class="vehicle-popup__content">
+                <div class="vehicle-popup__header">
+                    <div class="vehicle-popup__icon">
+                        <span class="material-symbols-outlined">directions_car</span>
+                    </div>
+                    <div class="vehicle-popup__info">
+                        <div class="vehicle-popup__name">
+                            <span id="popup-vehicle-name">Toyota Camry</span>
+                            <span id="popup-status-dot" class="vehicle-popup__status"></span>
+                        </div>
+                        <span id="popup-vehicle-id" class="vehicle-popup__plate">ABD-1234</span>
+                    </div>
+                    <div class="vehicle-popup__actions">
+                        <button id="popup-path-btn" class="vehicle-popup__action-btn" title="Show Path">
+                            <span class="material-symbols-outlined">route</span>
+                        </button>
+                        <button id="popup-history-btn" class="vehicle-popup__action-btn vehicle-popup__action-btn--primary" title="View History">
+                            <span class="material-symbols-outlined">history</span>
+                        </button>
+                        <button id="popup-close-btn" class="vehicle-popup__action-btn" title="Close">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="vehicle-popup__stats">
+                    <div class="vehicle-popup__stat">
+                        <span class="vehicle-popup__stat-icon material-symbols-outlined">speed</span>
+                        <span id="popup-speed" class="vehicle-popup__stat-value">0 km/h</span>
+                    </div>
+                    <div class="vehicle-popup__stat">
+                        <span class="vehicle-popup__stat-icon material-symbols-outlined">person</span>
+                        <span id="popup-driver" class="vehicle-popup__stat-value">Unassigned</span>
+                    </div>
+                    <div class="vehicle-popup__stat">
+                        <span class="vehicle-popup__stat-icon material-symbols-outlined">schedule</span>
+                        <span id="popup-update" class="vehicle-popup__stat-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dispatch Bottom Bar (hidden by default) -->
+    <div id="dispatch-bar" class="bottombar dispatch-panel">
+        <div class="dispatch-panel__header">
+            <div class="dispatch-panel__title-group">
+                <div class="dispatch-panel__icon">
+                    <span class="material-symbols-outlined icon-md">warning</span>
+                </div>
+                <div class="dispatch-panel__info">
+                    <h3 class="dispatch-panel__title">Incident Response</h3>
+                    <p class="dispatch-panel__subtitle">
+                        <span id="dispatch-incident-id">ID: INC-001</span>
+                        <span class="dispatch-panel__dot">•</span>
+                        <span id="dispatch-incident-type">Outage</span>
+                    </p>
+                </div>
+            </div>
+            <button id="dispatch-close" class="dispatch-panel__close">
+                <span class="material-symbols-outlined icon-md">close</span>
+            </button>
+        </div>
+        
+        <div class="dispatch-panel__content">
+            <!-- Left: Incident Details -->
+            <div class="dispatch-details">
+                <h4 class="dispatch-details__title">Incident Details</h4>
+                <div class="dispatch-details__card">
+                    <div class="dispatch-details__row">
+                        <span class="material-symbols-outlined icon-md dispatch-details__row-icon">location_on</span>
+                        <div class="dispatch-details__row-content">
+                            <span class="dispatch-details__row-label">Location</span>
+                            <span class="dispatch-details__row-value" id="dispatch-location">Khalda Area</span>
+                        </div>
+                    </div>
+                    <div class="dispatch-details__row">
+                        <span class="material-symbols-outlined icon-md dispatch-details__row-icon">schedule</span>
+                        <div class="dispatch-details__row-content">
+                            <span class="dispatch-details__row-label">Reported</span>
+                            <span class="dispatch-details__row-value" id="dispatch-reported">2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="dispatch-details__row">
+                        <div class="dispatch-details__priority dispatch-details__priority--high" id="dispatch-priority-dot"></div>
+                        <div class="dispatch-details__row-content">
+                            <span class="dispatch-details__row-label">Priority</span>
+                            <span class="dispatch-details__row-value" id="dispatch-priority">High Priority</span>
+                        </div>
+                    </div>
+                    <div class="dispatch-details__comment" id="dispatch-comment">"Traffic signals are down"</div>
+                </div>
+            </div>
+            
+            <!-- Right: Vehicle Dispatch -->
+            <div class="dispatch-vehicles">
+                <h4 class="dispatch-vehicles__title">Vehicle Dispatch</h4>
+                
+                <!-- State 1: Initial Choice - Side by side cards -->
+                <div id="dispatch-state-choice" class="dispatch-state dispatch-state--active">
+                    <div class="dispatch-choice-grid">
+                        <!-- Auto-assign card -->
+                        <div class="dispatch-choice-card">
+                            <div class="dispatch-choice-card__icon dispatch-choice-card__icon--primary">
+                                <span class="material-symbols-outlined">bolt</span>
+                            </div>
+                            <h5 class="dispatch-choice-card__title">Auto-Assign</h5>
+                            <p class="dispatch-choice-card__desc">Find and assign the nearest available vehicle automatically.</p>
+                            <button id="btn-auto-assign" class="btn btn--primary btn--block">
+                                <span class="material-symbols-outlined icon-sm">send</span>
+                                Auto-Assign
+                            </button>
+                        </div>
+                        
+                        <!-- Manual select card -->
+                        <div class="dispatch-choice-card">
+                            <div class="dispatch-choice-card__icon dispatch-choice-card__icon--secondary">
+                                <span class="material-symbols-outlined">touch_app</span>
+                            </div>
+                            <h5 class="dispatch-choice-card__title">Manual Select</h5>
+                            <p class="dispatch-choice-card__desc">Choose from a list of available vehicles by proximity.</p>
+                            <button id="btn-manual-select" class="btn btn--outline btn--block">
+                                <span class="material-symbols-outlined icon-sm">list</span>
+                                Select Vehicle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- State 2: Searching -->
+                <div id="dispatch-state-searching" class="dispatch-state">
+                    <div class="dispatch-searching">
+                        <div class="dispatch-searching__spinner"></div>
+                        <h5 class="dispatch-searching__title">Scanning for available units...</h5>
+                        <p class="dispatch-searching__desc">Calculating distances and response times</p>
+                    </div>
+                </div>
+                
+                <!-- State 3: Vehicle Selection -->
+                <div id="dispatch-state-selection" class="dispatch-state">
+                    <p class="dispatch-vehicles__subtitle">Recommended Units (by proximity)</p>
+                    <div class="dispatch-vehicles__list" id="dispatch-vehicle-list">
+                        <!-- Vehicles will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- State 4: Assigned (Vehicle + Graph) -->
+                <div id="dispatch-state-assigned" class="dispatch-state">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Player (hidden by default) -->
+    <div id="history-player" class="bottombar history-player">
+        <div class="history-player__header">
+            <div class="history-player__title-group">
+                <div class="history-player__info">
+                    <div class="history-player__icon">
+                        <span class="material-symbols-outlined">route</span>
+                    </div>
+                    <div class="history-player__info-text">
+                        <h3 class="history-player__title">History Playback</h3>
+                        <p class="history-player__subtitle" id="history-vehicle-name">Toyota 1 (VH-001)</p>
+                    </div>
+                </div>
+                
+                <div class="history-player__divider"></div>
+                
+                <div class="history-player__range-controls">
+                    <button class="history-player__nav-btn" id="btn-prev-day" title="Previous Day">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <button class="history-player__nav-btn" id="btn-extend-start" title="Extend Start by 1 Day">
+                        <span class="material-symbols-outlined">first_page</span>
+                    </button>
+                    
+                    <button class="history-player__range-btn" id="btn-date-range">
+                        <span class="material-symbols-outlined icon-sm">calendar_today</span>
+                        <span class="history-player__range-label" id="history-range-label">Last 24h</span>
+                    </button>
+                    
+                    <button class="history-player__nav-btn" id="btn-extend-end" title="Extend End by 1 Day">
+                        <span class="material-symbols-outlined">last_page</span>
+                    </button>
+                    <button class="history-player__nav-btn" id="btn-next-day" title="Next Day">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="history-player__header-right">
+                <div class="history-player__live-info">
+                    <div class="history-player__live-item">
+                        <span class="material-symbols-outlined icon-sm">speed</span>
+                        <span id="playback-speed">0</span>
+                        <span class="history-player__live-unit">km/h</span>
+                    </div>
+                </div>
+                
+                <button id="history-close" class="history-player__close">
+                    <span class="material-symbols-outlined icon-md">close</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="history-player__content">
+            <div class="history-player__scrubber">
+                <div class="history-player__labels">
+                    <span>00:00</span>
+                    <span>06:00</span>
+                    <span>12:00</span>
+                    <span>18:00</span>
+                    <span>24:00</span>
+                </div>
+                <div class="history-player__track">
+                    <div class="history-player__ticks"></div>
+                    <div class="history-player__track-bg"></div>
+                    <div class="history-player__track-progress" style="width: 0%;"></div>
+                    <div class="history-player__thumb" style="left: 0%;"></div>
+                </div>
+            </div>
+            
+            <div class="history-player__controls">
+                <div class="history-player__time">
+                    <span class="history-player__time-date" id="playback-date">--/--/----</span>
+                    <span class="history-player__time-current" id="playback-time">--:--:--</span>
+                </div>
+                
+                <div class="history-player__playback">
+                    <button class="history-player__playback-btn" id="btn-fast-backward" title="Fast Backward">
+                        <span class="material-symbols-outlined">fast_rewind</span>
+                    </button>
+                    <button class="history-player__playback-btn" id="btn-skip-backward" title="Skip Backward">
+                        <span class="material-symbols-outlined">skip_previous</span>
+                    </button>
+                    <button class="history-player__play-btn" id="btn-play-pause" title="Play">
+                        <span class="material-symbols-outlined icon-filled">play_arrow</span>
+                    </button>
+                    <button class="history-player__playback-btn" id="btn-skip-forward" title="Skip Forward">
+                        <span class="material-symbols-outlined">skip_next</span>
+                    </button>
+                    <button class="history-player__playback-btn" id="btn-fast-forward" title="Fast Forward">
+                        <span class="material-symbols-outlined">fast_forward</span>
+                    </button>
+                </div>
+                
+                <div class="history-player__speed">
+                    <span class="history-player__speed-label">Speed</span>
+                    <div class="history-player__speed-slider-container">
+                        <input type="range" 
+                               id="speed-slider" 
+                               class="history-player__speed-slider" 
+                               min="0" 
+                               max="100" 
+                               value="25" 
+                               step="1">
+                        <div class="history-player__speed-ticks">
+                            <span data-value="0.5">0.5x</span>
+                            <span data-value="1">1x</span>
+                            <span data-value="2">2x</span>
+                            <span data-value="4">4x</span>
+                            <span data-value="8">8x</span>
+                        </div>
+                    </div>
+                    <span class="history-player__speed-value" id="speed-value">1x</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Date Range Picker Dropdown -->
+    <div id="date-range-picker" class="date-range-picker" style="display: none;">
+        <div class="date-range-picker__header">
+            <h4>Select Time Range</h4>
+            <button class="date-range-picker__close" id="date-picker-close">
+                <span class="material-symbols-outlined icon-sm">close</span>
+            </button>
+        </div>
+        <div class="date-range-picker__presets">
+            <button class="date-range-picker__preset date-range-picker__preset--active" data-hours="24">Last 24 Hours</button>
+            <button class="date-range-picker__preset" data-hours="48">Last 48 Hours</button>
+            <button class="date-range-picker__preset" data-hours="168">Last 7 Days</button>
+            <button class="date-range-picker__preset" data-hours="custom">Custom Range</button>
+        </div>
+        <div class="date-range-picker__custom" id="custom-range-fields" style="display: none;">
+            <div class="date-range-picker__field">
+                <label>From</label>
+                <input type="datetime-local" id="range-start" class="date-range-picker__input">
+            </div>
+            <div class="date-range-picker__field">
+                <label>To</label>
+                <input type="datetime-local" id="range-end" class="date-range-picker__input">
+            </div>
+        </div>
+        <div class="date-range-picker__actions">
+            <button class="btn btn--ghost" id="date-picker-cancel">Cancel</button>
+            <button class="btn btn--primary" id="date-picker-apply">Apply Range</button>
+        </div>
+    </div>
+    
+    <!-- Playback Status Toast -->
+    <div id="playback-toast" class="playback-toast" style="display: none;">
+        <span class="playback-toast__message"></span>
+    </div>
+</div>

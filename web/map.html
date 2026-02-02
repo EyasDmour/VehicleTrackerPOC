@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle Tracker - Path Visualization</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        select, button, input {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+        .info { font-size: 12px; color: #666; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="controls">
+        <h3 style="margin-top:0">🚗 Vehicle Path</h3>
+        
+        <label>API Base URL:</label><br>
+        <input type="text" id="apiUrl" value="http://localhost:5000" style="width: 200px"><br>
+        
+        <label>Vehicle:</label><br>
+        <select id="vehicleSelect" style="width: 220px">
+            <option value="">-- Load vehicles first --</option>
+        </select><br>
+        
+        <label>Date Range:</label><br>
+        <input type="datetime-local" id="startDate"><br>
+        <input type="datetime-local" id="endDate"><br>
+        
+        <button onclick="loadVehicles()">Load Vehicles</button>
+        <button onclick="loadPath()">Show Path</button>
+        <button onclick="loadToday()">Today's Path</button>
+        
+        <div class="info" id="info"></div>
+    </div>
+
+    <script>
+        // Initialize map centered on a default location
+        const map = L.map('map').setView([24.7136, 46.6753], 12);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        let pathLayer = null;
+        let markersLayer = L.layerGroup().addTo(map);
+        
+        // Set default dates (today)
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        document.getElementById('startDate').value = todayStart.toISOString().slice(0, 16);
+        document.getElementById('endDate').value = now.toISOString().slice(0, 16);
+        
+        async function loadVehicles() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            try {
+                const res = await fetch(`${apiUrl}/api/vehicles`);
+                const vehicles = await res.json();
+                
+                const select = document.getElementById('vehicleSelect');
+                select.innerHTML = '<option value="">-- Select vehicle --</option>';
+                
+                vehicles.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.vehicleId;
+                    option.textContent = `${v.plateNumber} (${v.make} ${v.model})`;
+                    select.appendChild(option);
+                });
+                
+                document.getElementById('info').textContent = `Loaded ${vehicles.length} vehicles`;
+            } catch (e) {
+                document.getElementById('info').textContent = `Error: ${e.message}`;
+            }
+        }
+        
+        async function loadToday() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const vehicleId = document.getElementById('vehicleSelect').value;
+            
+            if (!vehicleId) {
+                alert('Please select a vehicle');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${apiUrl}/api/history/vehicles/${vehicleId}/today`);
+                const data = await res.json();
+                drawPath(data);
+            } catch (e) {
+                document.getElementById('info').textContent = `Error: ${e.message}`;
+            }
+        }
+        
+        async function loadPath() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const vehicleId = document.getElementById('vehicleSelect').value;
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            if (!vehicleId) {
+                alert('Please select a vehicle');
+                return;
+            }
+            
+            try {
+                const params = new URLSearchParams({
+                    from: new Date(start).toISOString(),
+                    to: new Date(end).toISOString()
+                });
+                
+                const res = await fetch(`${apiUrl}/api/history/vehicles/${vehicleId}/range?${params}`);
+                const data = await res.json();
+                drawPath(data);
+            } catch (e) {
+                document.getElementById('info').textContent = `Error: ${e.message}`;
+            }
+        }
+        
+        function drawPath(data) {
+            // Clear previous
+            if (pathLayer) map.removeLayer(pathLayer);
+            markersLayer.clearLayers();
+            
+            // Handle wrapped response format { trail: [...] } or direct array
+            const points = Array.isArray(data) ? data : (data.trail || data.points || []);
+            
+            if (!points || points.length === 0) {
+                document.getElementById('info').textContent = 'No data found for this range';
+                return;
+            }
+            
+            // Extract coordinates
+            const coords = points.map(p => {
+                // PostGIS returns coordinates as {x, y} or we might have lat/lng
+                if (p.location) {
+                    return [p.location.y || p.location.latitude, p.location.x || p.location.longitude];
+                }
+                return [p.latitude, p.longitude];
+            }).filter(c => c[0] && c[1]);
+            
+            if (coords.length === 0) {
+                document.getElementById('info').textContent = 'No valid coordinates found';
+                return;
+            }
+            
+            // Draw polyline
+            pathLayer = L.polyline(coords, {
+                color: '#2196F3',
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+            
+            // Add start marker (green)
+            L.marker(coords[0], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div style="background:#4CAF50;color:white;padding:5px 10px;border-radius:4px;font-weight:bold;">START</div>'
+                })
+            }).addTo(markersLayer);
+            
+            // Add end marker (red)
+            L.marker(coords[coords.length - 1], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: '<div style="background:#f44336;color:white;padding:5px 10px;border-radius:4px;font-weight:bold;">END</div>'
+                })
+            }).addTo(markersLayer);
+            
+            // Add intermediate points as small circles
+            coords.forEach((coord, i) => {
+                if (i > 0 && i < coords.length - 1) {
+                    L.circleMarker(coord, {
+                        radius: 4,
+                        color: '#2196F3',
+                        fillColor: '#2196F3',
+                        fillOpacity: 1
+                    }).bindPopup(`Point ${i+1}<br>Speed: ${points[i].speed || 'N/A'} km/h<br>Fuel: ${points[i].fuel || 'N/A'}%<br>Time: ${new Date(points[i].timestamp).toLocaleString()}`)
+                    .addTo(markersLayer);
+                }
+            });
+            
+            // Fit map to path
+            map.fitBounds(pathLayer.getBounds(), { padding: [50, 50] });
+            
+            document.getElementById('info').textContent = `Showing ${coords.length} points`;
+        }
+        
+        // Auto-load vehicles on page load
+        window.onload = () => {
+            setTimeout(loadVehicles, 500);
+        };
+    </script>
+</body>
+</html>

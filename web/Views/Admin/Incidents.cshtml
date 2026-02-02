@@ -1,0 +1,434 @@
+@{
+    ViewData["Title"] = "Incidents";
+    Layout = "_AdminLayout";
+}
+
+<!-- Toolbar -->
+<div class="admin-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div class="admin-search flex-grow-1" style="max-width: 400px;">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" class="form-control" id="search-input" placeholder="Search incidents...">
+    </div>
+    <div class="d-flex gap-3">
+        <select class="form-select" id="status-filter" style="width: 150px;" onchange="applyFilters()">
+            <option value="">All Statuses</option>
+        </select>
+        <button class="btn btn-admin-primary" data-bs-toggle="modal" data-bs-target="#incidentModal" onclick="openAddModal()">
+            <span class="material-symbols-outlined">add</span>
+            Report Incident
+        </button>
+    </div>
+</div>
+
+<!-- Incidents Table -->
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table table-admin">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Location</th>
+                    <th>Assigned To</th>
+                    <th>Created</th>
+                    <th style="width: 120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="incidents-table">
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <div class="spinner-admin mx-auto"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="incidentModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">Report Incident</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="incident-form" onsubmit="saveIncident(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="incident-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label" for="incident-title">Title *</label>
+                        <input type="text" class="form-control" id="incident-title" placeholder="Brief description of the incident" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label" for="incident-description">Description</label>
+                        <textarea class="form-control" id="incident-description" rows="3" placeholder="Detailed description..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="incident-priority">Priority *</label>
+                            <select class="form-select" id="incident-priority" required>
+                                <option value="">Select priority...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="status-group" style="display: none;">
+                            <label class="form-label" for="incident-status">Status</label>
+                            <select class="form-select" id="incident-status">
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="vehicle-group" style="display: none;">
+                        <label class="form-label" for="incident-vehicle">Assigned Vehicle</label>
+                        <select class="form-select" id="incident-vehicle">
+                            <option value="">Select vehicle...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label" for="incident-location">Location Name</label>
+                        <input type="text" class="form-control" id="incident-location" placeholder="e.g. Khalda Circle, Amman">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="incident-lat">Latitude</label>
+                            <input type="number" step="any" class="form-control" id="incident-lat" placeholder="31.9539">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="incident-lng">Longitude</label>
+                            <input type="number" step="any" class="form-control" id="incident-lng" placeholder="35.8636">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-admin-primary" id="save-btn">Save Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Close Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalTitle">Close Incident</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to close this incident? This will mark it as resolved.</p>
+                <input type="hidden" id="delete-incident-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-admin-primary" onclick="confirmDelete()">Close Incident</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allIncidents = [];
+let allVehicles = [];
+let incidentPriorities = [];
+let incidentStatuses = [];
+let incidentModal, deleteModal;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Initialize Bootstrap modals
+    incidentModal = new bootstrap.Modal(document.getElementById('incidentModal'));
+    deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    await loadData();
+    
+    // Setup search
+    document.getElementById('search-input').addEventListener('input', () => applyFilters());
+
+    // Setup Status Change Listener for Dynamic Form
+    document.getElementById('incident-status').addEventListener('change', function() {
+        const vehicleGroup = document.getElementById('vehicle-group');
+        const selectedStatusId = parseInt(this.value);
+        const status = incidentStatuses.find(s => s.incidentStatusId === selectedStatusId);
+        
+        // Use requiresVehicle from API metadata if available, fallback to ID 2 (Assigned)
+        const requiresVehicle = status ? (status.requiresVehicle !== undefined ? status.requiresVehicle : status.incidentStatusId === 2) : false;
+
+        if (requiresVehicle) {
+            vehicleGroup.style.display = 'block';
+            document.getElementById('incident-vehicle').required = true;
+        } else {
+            vehicleGroup.style.display = 'none';
+            document.getElementById('incident-vehicle').required = false;
+            document.getElementById('incident-vehicle').value = ''; // Clear selection
+        }
+    });
+});
+
+async function loadData() {
+    console.log('loadData: Starting to load data...');
+    try {
+        console.log('loadData: Calling APIs...');
+        const [incidentsRes, prioritiesRes, statusesRes, vehiclesRes] = await Promise.all([
+            IncidentsAPI.getAll(),
+            IncidentPrioritiesAPI.getAll(),
+            IncidentStatusesAPI.getAll(),
+            VehiclesAPI.getAll()
+        ]);
+        
+        console.log('loadData: Incidents:', incidentsRes);
+        console.log('loadData: Priorities:', prioritiesRes);
+        console.log('loadData: Statuses:', statusesRes);
+        
+        allIncidents = incidentsRes;
+        incidentPriorities = prioritiesRes;
+        incidentStatuses = statusesRes;
+        allVehicles = vehiclesRes; // Store vehicles
+        
+        populateSelects();
+        renderIncidents(allIncidents);
+        console.log('loadData: Complete');
+    } catch (error) {
+        console.error('Failed to load data:', error);
+        showToast('Failed to load incidents', 'error');
+    }
+}
+
+function populateSelects() {
+    // Priority select in modal
+    const prioritySelect = document.getElementById('incident-priority');
+    prioritySelect.innerHTML = '<option value="">Select priority...</option>' + 
+        incidentPriorities.map(p => `<option value="${p.incidentPriorityId}">${p.priorityName}</option>`).join('');
+    
+    // Status select in modal
+    const statusSelect = document.getElementById('incident-status');
+    statusSelect.innerHTML = incidentStatuses.map(s => `<option value="${s.incidentStatusId}">${s.statusName}</option>`).join('');
+    
+    // Vehicle select in modal
+    const vehicleSelect = document.getElementById('incident-vehicle');
+    vehicleSelect.innerHTML = '<option value="">Select vehicle...</option>' + 
+        allVehicles.map(v => `<option value="${v.vehicleId}">${v.plateNumber} (${v.make} ${v.model})</option>`).join('');
+    
+    // Status filter
+    const statusFilter = document.getElementById('status-filter');
+    statusFilter.innerHTML = '<option value="">All Statuses</option>' + 
+        incidentStatuses.map(s => `<option value="${s.incidentStatusId}">${s.statusName}</option>`).join('');
+}
+
+function applyFilters() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    const statusId = document.getElementById('status-filter').value;
+    
+    let filtered = allIncidents;
+    
+    if (query) {
+        filtered = filtered.filter(i => 
+            (i.title || '').toLowerCase().includes(query) ||
+            (i.description || '').toLowerCase().includes(query) ||
+            (i.locationName || '').toLowerCase().includes(query)
+        );
+    }
+    
+    if (statusId) {
+        filtered = filtered.filter(i => i.incidentStatusId == statusId);
+    }
+    
+    renderIncidents(filtered);
+}
+
+function renderIncidents(incidents) {
+    const tbody = document.getElementById('incidents-table');
+    
+    if (incidents.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined empty-state__icon">warning</span>
+                        <div class="empty-state__title">No incidents found</div>
+                        <div class="empty-state__text">Report an incident to get started</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = incidents.map(i => {
+        const priorityBadge = {
+            'High': 'badge-admin-danger',
+            'Medium': 'badge-admin-warning',
+            'Low': 'badge-admin-info'
+        }[i.incidentPriorityName] || 'badge-admin-secondary';
+        
+        const statusBadge = {
+            'Open': 'badge-admin-danger',
+            'In Progress': 'badge-admin-info',
+            'Closed': 'badge-admin-secondary',
+            'Resolved': 'badge-admin-secondary',
+            'Cancelled': 'badge-admin-secondary'
+        }[i.incidentStatusName] || 'badge-admin-secondary';
+        
+        const isClosed = i.incidentStatusName === 'Closed' || i.incidentStatusName === 'Cancelled';
+        const assignedText = i.assignedVehiclePlate 
+            ? `${i.assignedVehiclePlate} (${i.assignedVehicleMake || ''} ${i.assignedVehicleModel || ''})`.trim()
+            : '-';
+        
+        return `
+            <tr>
+                <td class="text-muted">#${i.incidentId}</td>
+                <td><strong>${i.title || '-'}</strong></td>
+                <td><span class="badge badge-admin ${priorityBadge}">${i.incidentPriorityName || '-'}</span></td>
+                <td><span class="badge badge-admin ${statusBadge}">${i.incidentStatusName || '-'}</span></td>
+                <td>${i.locationName || '-'}</td>
+                <td>${assignedText}</td>
+                <td>${formatDate(i.createdAt)}</td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-action btn-action-edit" onclick="editIncident(${i.incidentId})" title="Edit">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        ${!isClosed ? `
+                        <button class="btn btn-action btn-action-delete" onclick="closeIncident(${i.incidentId})" title="Close">
+                            <span class="material-symbols-outlined">check_circle</span>
+                        </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Report Incident';
+    document.getElementById('incident-form').reset();
+    document.getElementById('incident-id').value = '';
+    document.getElementById('status-group').style.display = 'none';
+}
+
+function editIncident(id) {
+    const incident = allIncidents.find(i => i.incidentId === id);
+    if (!incident) return;
+    
+    document.getElementById('modal-title').textContent = 'Edit Incident';
+    document.getElementById('incident-id').value = id;
+    document.getElementById('incident-title').value = incident.title || '';
+    document.getElementById('incident-description').value = incident.description || '';
+    document.getElementById('incident-priority').value = incident.incidentPriorityId || '';
+    document.getElementById('incident-location').value = incident.locationName || '';
+    document.getElementById('incident-lat').value = incident.latitude || '';
+    document.getElementById('incident-lng').value = incident.longitude || '';
+    document.getElementById('incident-status').value = incident.incidentStatusId || '';
+    
+    document.getElementById('status-group').style.display = 'block';
+    
+    // Trigger logic manually
+    const status = incidentStatuses.find(s => s.incidentStatusId === incident.incidentStatusId);
+    const requiresVehicle = status ? (status.requiresVehicle !== undefined ? status.requiresVehicle : status.incidentStatusId === 2) : false;
+    
+    if (requiresVehicle) {
+        document.getElementById('vehicle-group').style.display = 'block';
+        document.getElementById('incident-vehicle').required = true;
+        if (incident.assignedTo) {
+            document.getElementById('incident-vehicle').value = incident.assignedTo;
+        }
+    } else {
+        document.getElementById('vehicle-group').style.display = 'none';
+        document.getElementById('incident-vehicle').required = false;
+    }
+    
+    incidentModal.show();
+}
+
+async function saveIncident(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('incident-id').value;
+    const data = {
+        title: document.getElementById('incident-title').value,
+        description: document.getElementById('incident-description').value || null,
+        incidentPriorityId: parseInt(document.getElementById('incident-priority').value) || null,
+        locationName: document.getElementById('incident-location').value || null,
+        latitude: parseFloat(document.getElementById('incident-lat').value) || null,
+        longitude: parseFloat(document.getElementById('incident-lng').value) || null
+    };
+    
+    // Add status if editing
+    if (id) {
+        const statusId = parseInt(document.getElementById('incident-status').value);
+        if (statusId) {
+            data.incidentStatusId = statusId;
+        }
+        
+        // Handle assignment
+        const vehicleGroup = document.getElementById('vehicle-group');
+        const assignedTo = document.getElementById('incident-vehicle').value;
+        
+        if (vehicleGroup.style.display !== 'none') {
+             data.assignedTo = assignedTo ? parseInt(assignedTo) : 0;
+        } else {
+             // If field hidden, clear assignment if we want strict logic, or send 0.
+             // Sending 0 clears assignment in backend logic (if implemented).
+             data.assignedTo = 0;
+        }
+    }
+    
+    const saveBtn = document.getElementById('save-btn');
+    
+    try {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-admin"></span>';
+        
+        if (id) {
+            await IncidentsAPI.update(id, data);
+            showToast('Incident updated successfully', 'success');
+        } else {
+            await IncidentsAPI.report(data);
+            showToast('Incident reported successfully', 'success');
+        }
+        
+        incidentModal.hide();
+        await loadData();
+    } catch (error) {
+        console.error('Failed to save incident:', error);
+        showToast('Failed to save incident: ' + error.message, 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Incident';
+    }
+}
+
+function closeIncident(id) {
+    document.getElementById('delete-incident-id').value = id;
+    deleteModal.show();
+}
+
+async function confirmDelete() {
+    const id = document.getElementById('delete-incident-id').value;
+    try {
+        await IncidentsAPI.close(id);
+        showToast('Incident closed successfully', 'success');
+        deleteModal.hide();
+        await loadData();
+    } catch (error) {
+        console.error('Failed to close incident:', error);
+        showToast('Failed to close incident: ' + error.message, 'error');
+    }
+}
+</script>
+}

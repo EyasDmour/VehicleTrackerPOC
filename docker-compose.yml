@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: no
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: vehicle_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d vehicle_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    restart: no
+    working_dir: /app
+    command: dotnet watch run --urls "http://0.0.0.0:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=vehicle_tracker;Username=user;Password=password
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - DOTNET_RUNNING_IN_CONTAINER=true
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./api:/app
+      - api_nuget:/root/.nuget
+      - api_obj:/app/obj
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    restart: no
+    working_dir: /app
+    command: dotnet watch run --urls "http://0.0.0.0:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ApiBaseUrl=http://api:5000
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - DOTNET_RUNNING_IN_CONTAINER=true
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./web:/app
+      - web_nuget:/root/.nuget
+      - web_obj:/app/obj
+    depends_on:
+      - api
+
+volumes:
+  db_data:
+  api_nuget:
+  api_obj:
+  web_nuget:
+  web_obj:

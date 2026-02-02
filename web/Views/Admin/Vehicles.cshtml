@@ -1,0 +1,281 @@
+@{
+    ViewData["Title"] = "Vehicles";
+    Layout = "_AdminLayout";
+}
+
+<!-- Toolbar -->
+<div class="admin-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div class="admin-search flex-grow-1" style="max-width: 400px;">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" class="form-control" id="search-input" placeholder="Search vehicles...">
+    </div>
+    <button class="btn btn-admin-primary" data-bs-toggle="modal" data-bs-target="#vehicleModal" onclick="openAddModal()">
+        <span class="material-symbols-outlined">add</span>
+        Add Vehicle
+    </button>
+</div>
+
+<!-- Vehicles Table -->
+<div class="admin-card">
+    <div class="table-responsive">
+        <table class="table table-admin">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Make & Model</th>
+                    <th>Plate Number</th>
+                    <th>Color</th>
+                    <th>Current Driver</th>
+                    <th style="width: 100px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="vehicles-table">
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <div class="spinner-admin mx-auto"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="vehicleModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Vehicle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="vehicle-form" onsubmit="saveVehicle(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="vehicle-id">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="vehicle-make">Make *</label>
+                            <input type="text" class="form-control" id="vehicle-make" placeholder="e.g. Toyota" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="vehicle-model">Model *</label>
+                            <input type="text" class="form-control" id="vehicle-model" placeholder="e.g. Camry" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="vehicle-plate">Plate Number *</label>
+                            <input type="text" class="form-control" id="vehicle-plate" placeholder="e.g. ABC-1234" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="vehicle-color">Color</label>
+                            <input type="text" class="form-control" id="vehicle-color" placeholder="e.g. White">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label" for="vehicle-driver">Assign Driver</label>
+                        <select class="form-select" id="vehicle-driver">
+                            <option value="">-- No Driver --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-admin-primary" id="save-btn">Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalTitle">Delete Vehicle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete this vehicle? This action cannot be undone.</p>
+                <input type="hidden" id="delete-vehicle-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-admin-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-admin-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allVehicles = [];
+let allDrivers = [];
+let vehicleModal, deleteModal;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Initialize Bootstrap modals
+    vehicleModal = new bootstrap.Modal(document.getElementById('vehicleModal'));
+    deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    await loadData();
+    
+    // Setup search
+    document.getElementById('search-input').addEventListener('input', (e) => {
+        renderVehicles(filterVehicles(e.target.value));
+    });
+});
+
+async function loadData() {
+    try {
+        [allVehicles, allDrivers] = await Promise.all([
+            VehiclesAPI.getAll(),
+            DriversAPI.getAll()
+        ]);
+        
+        renderVehicles(allVehicles);
+        populateDriverSelect();
+    } catch (error) {
+        console.error('Failed to load data:', error);
+        showToast('Failed to load vehicles', 'error');
+    }
+}
+
+function filterVehicles(query) {
+    if (!query) return allVehicles;
+    query = query.toLowerCase();
+    return allVehicles.filter(v => 
+        (v.make || '').toLowerCase().includes(query) ||
+        (v.model || '').toLowerCase().includes(query) ||
+        (v.plateNumber || '').toLowerCase().includes(query) ||
+        (v.color || '').toLowerCase().includes(query)
+    );
+}
+
+function renderVehicles(vehicles) {
+    const tbody = document.getElementById('vehicles-table');
+    
+    if (vehicles.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined empty-state__icon">directions_car</span>
+                        <div class="empty-state__title">No vehicles found</div>
+                        <div class="empty-state__text">Add your first vehicle to get started</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = vehicles.map(v => `
+        <tr>
+            <td class="text-muted">#${v.vehicleId}</td>
+            <td><strong>${v.make || '-'} ${v.model || ''}</strong></td>
+            <td>${v.plateNumber || '-'}</td>
+            <td>${v.color || '-'}</td>
+            <td>${v.driver ? v.driver.firstName + ' ' + v.driver.lastName : '<span class="text-muted">Unassigned</span>'}</td>
+            <td>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-action btn-action-edit" onclick="editVehicle(${v.vehicleId})" title="Edit">
+                        <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button class="btn btn-action btn-action-delete" onclick="deleteVehicle(${v.vehicleId})" title="Delete">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function populateDriverSelect() {
+    const select = document.getElementById('vehicle-driver');
+    select.innerHTML = '<option value="">-- No Driver --</option>' + 
+        allDrivers.map(d => `<option value="${d.driverId}">${d.firstName} ${d.lastName}</option>`).join('');
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add Vehicle';
+    document.getElementById('vehicle-form').reset();
+    document.getElementById('vehicle-id').value = '';
+}
+
+function editVehicle(id) {
+    const vehicle = allVehicles.find(v => v.vehicleId === id);
+    if (!vehicle) return;
+    
+    document.getElementById('modalTitle').textContent = 'Edit Vehicle';
+    document.getElementById('vehicle-id').value = id;
+    document.getElementById('vehicle-make').value = vehicle.make || '';
+    document.getElementById('vehicle-model').value = vehicle.model || '';
+    document.getElementById('vehicle-plate').value = vehicle.plateNumber || '';
+    document.getElementById('vehicle-color').value = vehicle.color || '';
+    document.getElementById('vehicle-driver').value = vehicle.driverId || '';
+    
+    vehicleModal.show();
+}
+
+async function saveVehicle(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('vehicle-id').value;
+    const data = {
+        vehicleId: id ? parseInt(id) : 0,
+        make: document.getElementById('vehicle-make').value,
+        model: document.getElementById('vehicle-model').value,
+        plateNumber: document.getElementById('vehicle-plate').value,
+        color: document.getElementById('vehicle-color').value,
+        driverId: document.getElementById('vehicle-driver').value || null
+    };
+    
+    const saveBtn = document.getElementById('save-btn');
+    
+    try {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-admin"></span>';
+        
+        if (id) {
+            await VehiclesAPI.update(id, data);
+            showToast('Vehicle updated successfully', 'success');
+        } else {
+            await VehiclesAPI.create(data);
+            showToast('Vehicle added successfully', 'success');
+        }
+        
+        vehicleModal.hide();
+        await loadData();
+    } catch (error) {
+        console.error('Failed to save vehicle:', error);
+        showToast('Failed to save vehicle: ' + error.message, 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Vehicle';
+    }
+}
+
+function deleteVehicle(id) {
+    document.getElementById('delete-vehicle-id').value = id;
+    deleteModal.show();
+}
+
+async function confirmDelete() {
+    const id = document.getElementById('delete-vehicle-id').value;
+    
+    try {
+        await VehiclesAPI.delete(id);
+        showToast('Vehicle deleted successfully', 'success');
+        deleteModal.hide();
+        await loadData();
+    } catch (error) {
+        console.error('Failed to delete vehicle:', error);
+        showToast('Failed to delete vehicle: ' + error.message, 'error');
+    }
+}
+</script>
+}

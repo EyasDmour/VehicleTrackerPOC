@@ -1,0 +1,788 @@
+/* ===========================================
+   VEHICLE TRACKER - BOOTSTRAP 5 OVERRIDES
+   Maintains original design while using Bootstrap
+   =========================================== */
+
+/* ===== CSS VARIABLES (Bootstrap overrides) ===== */
+:root {
+    /* Map our design tokens to Bootstrap variables */
+    --bs-primary: #155dfc;
+    --bs-primary-rgb: 21, 93, 252;
+    --bs-success: #00c950;
+    --bs-success-rgb: 0, 201, 80;
+    --bs-warning: #ff6900;
+    --bs-warning-rgb: 255, 105, 0;
+    --bs-danger: #fb2c36;
+    --bs-danger-rgb: 251, 44, 54;
+    --bs-info: #f0b100;
+    --bs-info-rgb: 240, 177, 0;
+
+    /* Body */
+    --bs-body-font-family: 'Arimo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --bs-body-font-size: 16px;
+    --bs-body-color: #101828;
+    --bs-body-bg: #f9fafb;
+
+    /* Border */
+    --bs-border-color: #e5e7eb;
+    --bs-border-radius: 8px;
+    --bs-border-radius-sm: 6px;
+    --bs-border-radius-lg: 12px;
+}
+
+/* ===== BOOTSTRAP COMPONENT OVERRIDES ===== */
+
+/* Buttons - Primary */
+.btn-primary {
+    --bs-btn-bg: var(--color-primary);
+    --bs-btn-border-color: var(--color-primary);
+    --bs-btn-hover-bg: var(--color-primary-dark);
+    --bs-btn-hover-border-color: var(--color-primary-dark);
+    --bs-btn-active-bg: var(--color-primary-dark);
+    --bs-btn-active-border-color: var(--color-primary-dark);
+    --bs-btn-disabled-bg: var(--color-gray-300);
+    --bs-btn-disabled-border-color: var(--color-gray-300);
+}
+
+/* Buttons - Outline */
+.btn-outline-primary {
+    --bs-btn-color: var(--color-primary);
+    --bs-btn-border-color: var(--color-primary);
+    --bs-btn-hover-bg: var(--color-primary);
+    --bs-btn-hover-border-color: var(--color-primary);
+    --bs-btn-active-bg: var(--color-primary);
+    --bs-btn-active-border-color: var(--color-primary);
+}
+
+/* Forms */
+.form-control {
+    border-color: var(--color-gray-300);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-2) var(--spacing-3);
+}
+
+.form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.form-select {
+    border-color: var(--color-gray-300);
+    border-radius: var(--radius-md);
+}
+
+.form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* Cards */
+.card {
+    border-color: var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+    background-color: var(--color-white);
+    border-bottom-color: var(--color-gray-200);
+}
+
+/* Modals */
+.modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-header {
+    border-bottom-color: var(--color-gray-200);
+    padding: var(--spacing-4) var(--spacing-5);
+}
+
+.modal-body {
+    padding: var(--spacing-5);
+}
+
+.modal-footer {
+    border-top-color: var(--color-gray-200);
+    padding: var(--spacing-4) var(--spacing-5);
+}
+
+/* Offcanvas */
+.offcanvas {
+    --bs-offcanvas-width: 326px;
+    --bs-offcanvas-border-color: var(--color-gray-200);
+    box-shadow: var(--shadow-lg);
+    top: var(--navbar-height) !important;
+    /* Start below navbar */
+    height: calc(100vh - var(--navbar-height)) !important;
+}
+
+.offcanvas-backdrop {
+    top: var(--navbar-height) !important;
+    height: calc(100vh - var(--navbar-height)) !important;
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    font-size: var(--font-size-xs);
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+}
+
+/* Dropdowns */
+.dropdown-menu {
+    border-color: var(--color-gray-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-2);
+}
+
+.dropdown-item {
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--color-gray-100);
+}
+
+/* Nav Tabs/Pills */
+.nav-tabs {
+    border-bottom-color: var(--color-gray-200);
+}
+
+.nav-tabs .nav-link {
+    color: var(--color-gray-600);
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: var(--spacing-3) var(--spacing-4);
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--color-gray-900);
+    border-bottom-color: var(--color-gray-300);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    background: none;
+}
+
+.nav-pills .nav-link {
+    color: var(--color-gray-600);
+    border-radius: var(--radius-md);
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--color-primary);
+}
+
+/* Alerts */
+.alert {
+    border-radius: var(--radius-md);
+    border: none;
+}
+
+/* Toasts */
+.toast {
+    border-radius: var(--radius-md);
+    border: none;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Tables */
+.table {
+    --bs-table-bg: transparent;
+}
+
+.table>thead {
+    background-color: var(--color-gray-50);
+}
+
+.table>thead>tr>th {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom-width: 1px;
+}
+
+/* ===== APP-SPECIFIC BOOTSTRAP UTILITIES ===== */
+
+/* Status badges using Bootstrap */
+.badge-status-active {
+    background-color: var(--color-success-light) !important;
+    color: var(--color-success-text) !important;
+}
+
+.badge-status-idle {
+    background-color: var(--color-info-light) !important;
+    color: #92400e !important;
+}
+
+.badge-status-offline {
+    background-color: var(--color-gray-100) !important;
+    color: var(--color-gray-600) !important;
+}
+
+.badge-status-maintenance {
+    background-color: var(--color-danger-light) !important;
+    color: var(--color-danger-text) !important;
+}
+
+/* Priority badges - distinct colors: red, yellow, blue */
+.badge-priority-high {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+}
+
+.badge-priority-medium {
+    background-color: #fefce8 !important;
+    color: #ca8a04 !important;
+}
+
+.badge-priority-low {
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
+}
+
+/* Incident status badges */
+.badge-incident-open {
+    background-color: var(--color-warning-light) !important;
+    color: var(--color-warning-text) !important;
+}
+
+.badge-incident-assigned {
+    background-color: var(--color-primary-light) !important;
+    color: var(--color-primary) !important;
+}
+
+.badge-incident-closed {
+    background-color: var(--color-success-light) !important;
+    color: var(--color-success-text) !important;
+}
+
+/* ===== APP COMPONENTS ===== */
+
+/* Navigation Tabs */
+.btn-nav-tab {
+    color: var(--color-gray-500);
+    background: transparent;
+    border: none;
+    font-weight: 500;
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+}
+
+.btn-nav-tab:hover {
+    color: var(--color-gray-700);
+    background-color: var(--color-gray-50);
+}
+
+.btn-nav-tab.active {
+    color: var(--color-primary);
+    background-color: var(--color-primary-lighter);
+}
+
+/* Fix Vehicle Card to match Incident Card style */
+.vehicle-card {
+    background-color: var(--color-white) !important;
+    border: 1px solid var(--color-gray-200) !important;
+}
+
+.vehicle-card:hover {
+    border-color: var(--color-gray-300) !important;
+    background-color: var(--color-white) !important;
+}
+
+.vehicle-card--selected {
+    background-color: var(--color-primary-lighter) !important;
+    border-color: var(--color-primary-light) !important;
+}
+
+/* ===== PREVENT BOOTSTRAP FROM BREAKING EXISTING STYLES ===== */
+
+/* Reset Bootstrap's navbar styles for our custom navbar */
+nav.navbar {
+    /* Reset Bootstrap navbar defaults */
+    --bs-navbar-padding-x: 0;
+    --bs-navbar-padding-y: 0;
+    flex-wrap: nowrap;
+
+    /* Re-apply our styles */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--navbar-height);
+    padding: 0 var(--spacing-5);
+    background-color: var(--color-white);
+    border-bottom: var(--border-width) solid var(--border-color);
+    z-index: var(--z-navbar);
+}
+
+/* Ensure navbar children maintain flex layout */
+nav.navbar .navbar__left,
+nav.navbar .navbar__right {
+    display: flex;
+    align-items: center;
+}
+
+nav.navbar .navbar__left {
+    gap: var(--spacing-5);
+}
+
+nav.navbar .navbar__right {
+    gap: var(--spacing-2);
+    position: relative;
+}
+
+/* Keep map container unaffected */
+#map {
+    font-size: initial;
+}
+
+/* Leaflet popup fixes for Bootstrap */
+.leaflet-popup-content {
+    margin: 0;
+}
+
+.leaflet-popup-content-wrapper {
+    padding: 0;
+}
+
+/* Ensure app shell maintains proper height */
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Bootstrap resets that might affect our layout */
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Prevent Bootstrap from adding margin to body */
+body {
+    margin: 0;
+}
+
+/* Force popup display when visible class is added by JS */
+.vehicle-popup--visible {
+    display: block !important;
+}
+
+/* Docked popup state (pinned to corner when viewing path) */
+.vehicle-popup--docked {
+    top: 20px !important;
+    left: 20px !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+/* Incident Card Fixes */
+.incident-card__desc {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+/* ===== BOTTOM BAR (History Playback & Dispatch) ===== */
+/* NOTE: Positioning (left/right) is handled by app.css with --beside/--full modifiers */
+/* This file only handles appearance overrides */
+
+.bottombar {
+    /* Appearance overrides - positioning inherited from app.css */
+    z-index: 1030;
+    /* Above Leaflet controls */
+    transition: transform 0.3s ease-in-out, left 0.3s ease-in-out;
+}
+
+/* Ensure sidebar-aware positioning works with Bootstrap classes */
+.history-player--beside {
+    left: var(--sidebar-width) !important;
+    right: 0 !important;
+}
+
+.history-player--full {
+    left: 0 !important;
+    right: 0 !important;
+}
+
+.bottombar--visible {
+    transform: translateY(0);
+}
+
+/* History Player Specifics */
+/* Bootstrap handles bg/border/shadow via classes now */
+
+
+/* Timeline/Scrubber - Maintaining custom look within Bootstrap layout */
+.history-player__scrubber {
+    position: relative;
+    user-select: none;
+}
+
+.history-player__ticks {
+    background-image: repeating-linear-gradient(90deg,
+            var(--bs-border-color) 0,
+            var(--bs-border-color) 1px,
+            transparent 1px,
+            transparent 20%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.history-player__labels span {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Speed Slider Tick Marks */
+.history-player__speed-slider-container {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.history-player__speed-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--bs-gray-500);
+    padding: 0 4px;
+    margin-top: 4px;
+}
+
+/* Ensure buttons don't have outline on focus for cleaner look */
+.btn-link:focus,
+.btn-close:focus {
+    box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .history-player__header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+
+    .history-player__header>div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    #history-vehicle-name {
+        display: none;
+        /* Hide name on small screens to save space */
+    }
+
+    .history-player__content {
+        padding: 1rem !important;
+    }
+}
+
+/* ===== DISPATCH PANEL BOOTSTRAP OVERRIDES ===== */
+/* Refined styling for the dispatch panel with proper spacing and colors */
+
+.dispatch-panel {
+    background: #fff;
+    bottom: 0;
+}
+
+.dispatch-panel__header {
+    height: 56px;
+    padding: 0 1.25rem;
+    background: linear-gradient(to right, #f9fafb, #fff);
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+/* Priority-based header gradients */
+.dispatch-panel__header--high {
+    background: linear-gradient(to right, #fef2f2, #fff);
+    border-bottom-color: #fecaca;
+}
+
+.dispatch-panel__header--medium {
+    background: linear-gradient(to right, #fefce8, #fff);
+    border-bottom-color: #fef08a;
+}
+
+.dispatch-panel__header--low {
+    background: linear-gradient(to right, #eff6ff, #fff);
+    border-bottom-color: #bfdbfe;
+}
+
+.dispatch-panel__icon {
+    width: 36px;
+    height: 36px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* Priority-based icon colors */
+.dispatch-panel__icon--high {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.dispatch-panel__icon--medium {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.dispatch-panel__icon--low {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.dispatch-panel__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.dispatch-panel__subtitle {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Make title and subtitle inline for compact header */
+.dispatch-panel__info {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.dispatch-panel__content {
+    padding: 1.25rem;
+    gap: 1rem;
+    background: #fff;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    align-items: stretch;
+}
+
+/* Make dispatch vehicles span full width within its grid area */
+.dispatch-vehicles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    height: 100%;
+}
+
+/* Left Column: Incident Details - styled as card to match dispatch cards */
+.dispatch-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    height: 100%;
+}
+
+.dispatch-details__title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+}
+
+.dispatch-details__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    min-height: 180px;
+    flex: 1;
+}
+
+.dispatch-details__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+}
+
+.dispatch-details__row-icon {
+    font-size: 16px;
+    color: #9ca3af;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.dispatch-details__priority {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.dispatch-details__row-label {
+    font-size: 0.6875rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.dispatch-details__row-value {
+    font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.dispatch-details__comment {
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: #4b5563;
+}
+
+/* Right Column: Vehicle Dispatch */
+.dispatch-vehicles__title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+}
+
+.dispatch-choice {
+    padding: 1.25rem;
+    gap: 0.875rem;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dispatch-choice__icon {
+    width: 44px;
+    height: 44px;
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.dispatch-choice__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.dispatch-choice__desc {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* New 2-column choice grid layout */
+.dispatch-choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    height: 100%;
+    flex: 1;
+}
+
+.dispatch-choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dispatch-choice-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dispatch-choice-card__icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.dispatch-choice-card__icon .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.dispatch-choice-card__icon--primary {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.dispatch-choice-card__icon--secondary {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.dispatch-choice-card__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.dispatch-choice-card__desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.dispatch-choice-card .btn {
+    margin-top: auto;
+    width: 100%;
+}
+
+.dispatch-searching {
+    padding: 1.5rem;
+    min-height: 180px;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+}
+
+.dispatch-vehicles__list {
+    /* max-height: 140px; REMOVED */
+}
+
+.dispatch-vehicle-card {
+    padding: 0.625rem 0.75rem;
+}
+
+.dispatch-vehicle-card__icon {
+    width: 34px;
+    height: 34px;
+}

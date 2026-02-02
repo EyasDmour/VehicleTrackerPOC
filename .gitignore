@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+.idea/
+.DS_Store
+
+# Publish
+*.pubxml
+*.publish.xml
+
+# Config
+appsettings.Development.json
+appsettings.local.json
+secrets.json
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
