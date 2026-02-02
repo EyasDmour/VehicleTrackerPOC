@@ -43,7 +43,6 @@ The easiest way to run the application is using Docker Compose.
 
 3.  Access the application:
     - **Web Dashboard**: [http://localhost:5001](http://localhost:5001)
-    - **API Swagger**: [http://localhost:5000/swagger](http://localhost:5000/swagger)
 
    The database will be automatically seeded with dummy data (incidents and vehicles) on the first run.
 
