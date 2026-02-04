@@ -77,7 +77,7 @@ Navigate to the `api` directory and update `appsettings.json` or use User Secret
 cd api
 dotnet run
 ```
-The API will start on `http://localhost:5000`.
+The API will start on `http://localhost:5000` (Endpoints are available under `/api`, e.g., `/api/incidents`).
 
 ### 4. Configure Web App
 The web app needs to know where the API is. Ensure `web/appsettings.json` points to the correct URL (default `http://localhost:5000`).
@@ -88,6 +88,58 @@ cd web
 dotnet run
 ```
 The Web App will start on `http://localhost:5001`.
+
+## Deployment & Container Registry (GHCR)
+
+You can build and push production-ready Docker images to your personal GitHub Container Registry (GHCR) for deployment on other servers.
+
+### 1. Authenticate with GitHub
+You need a Personal Access Token (PAT) with `write:packages` and `delete:packages` permissions.
+
+> **Tip:** Use a **Tokens (classic)** PAT for simplest configuration.
+> Go to **Settings** > **Developer settings** > **Personal access tokens** > **Tokens (classic)** > **Generate new token**.
+> *Select `write:packages` and `delete:packages` scopes.*
+
+```bash
+export CR_PAT=YOUR_TOKEN
+echo $CR_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
+### 2. Build and Push Images
+A dedicated production compose file (`docker-compose.prod.yml`) is provided to build optimized images.
+
+**Standard Push (latest):**
+```bash
+# Build
+docker compose -f docker-compose.prod.yml build
+
+# Push to GHCR
+docker compose -f docker-compose.prod.yml push
+```
+
+**Custom Tag (e.g., for testing):**
+You can use the `TAG` environment variable to create specific versions without overwriting `latest`.
+```bash
+# Build with custom tag
+TAG=v1.0-test docker compose -f docker-compose.prod.yml build
+
+# Push custom tag
+TAG=v1.0-test docker compose -f docker-compose.prod.yml push
+```
+
+### 3. Run from Registry
+To run the application on a server using the pushed images:
+
+```bash
+# Pull and run (latest)
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+
+# OR Run a specific tag
+TAG=v1.0-test docker compose -f docker-compose.prod.yml up -d
+```
+
+**Note:** Ensure your server has the necessary environment variables set (DB credentials, etc.) either in a `.env` file or exported in the shell.
 
 ## Project Structure
 
