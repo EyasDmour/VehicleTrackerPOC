@@ -14,18 +14,14 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 
-// Add SignalR
-builder.Services.AddSignalR();
-
-// Add CORS (updated for SignalR)
+// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.SetIsOriginAllowed(_ => true) // Allow any origin for SignalR
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials(); // Required for SignalR
+              .AllowAnyHeader();
     });
 });
 
@@ -61,9 +57,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
-
-// Map SignalR hub
-app.MapHub<EventsHub>("/eventsHub");
 
 app.Run();
 
