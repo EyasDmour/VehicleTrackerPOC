@@ -231,8 +231,21 @@ public class IncidentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // TODO: Send notification to vehicle (WebSocket, SignalR, or push notification)
-        // For now, we just return success
+        // Broadcast update via SignalR
+        await _hubContext.Clients.All.SendAsync("ReceiveIncidentUpdate", new
+        {
+            incident.IncidentId,
+            incident.IncidentStatusId,
+            incident.IncidentPriorityId,
+            incident.Title,
+            incident.Description,
+            incident.LocationName,
+            Latitude = incident.Location?.Y,
+            Longitude = incident.Location?.X,
+            incident.UpdatedAt,
+            AssignedVehiclePlate = vehicle.PlateNumber,
+            AssignedTo = incident.AssignedTo
+        });
 
         return Ok(new
         {
@@ -240,7 +253,7 @@ public class IncidentsController : ControllerBase
             incidentId = id,
             assignedVehicleId = request.VehicleId,
             assignedVehiclePlate = vehicle.PlateNumber,
-            notificationSent = true // Placeholder
+            notificationSent = true
         });
     }
 
