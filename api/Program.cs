@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using VehicleTracker.Api.Data;
-using VehicleTracker.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 

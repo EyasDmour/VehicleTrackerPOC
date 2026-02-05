@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using VehicleTracker.Api.Data;
-using VehicleTracker.Api.Hubs;
 using VehicleTracker.Api.Models;
 
 namespace VehicleTracker.Api.Controllers;
@@ -13,12 +11,10 @@ namespace VehicleTracker.Api.Controllers;
 public class IncidentsController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly IHubContext<EventsHub> _hubContext;
 
-    public IncidentsController(AppDbContext context, IHubContext<EventsHub> hubContext)
+    public IncidentsController(AppDbContext context)
     {
         _context = context;
-        _hubContext = hubContext;
     }
 
     /// <summary>
@@ -41,19 +37,7 @@ public class IncidentsController : ControllerBase
         _context.Incidents.Add(incident);
         await _context.SaveChangesAsync();
 
-        // Broadcast new incident via SignalR
-        await _hubContext.Clients.All.SendAsync("ReceiveNewIncident", new
-        {
-            incident.IncidentId,
-            incident.IncidentStatusId,
-            incident.IncidentPriorityId,
-            incident.Title,
-            incident.Description,
-            incident.LocationName,
-            Latitude = request.Latitude,
-            Longitude = request.Longitude,
-            incident.CreatedAt
-        });
+
 
         return CreatedAtAction(nameof(GetIncident), new { id = incident.IncidentId }, new
         {
@@ -188,19 +172,7 @@ public class IncidentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Broadcast incident update via SignalR
-        await _hubContext.Clients.All.SendAsync("ReceiveIncidentUpdate", new
-        {
-            incident.IncidentId,
-            incident.IncidentStatusId,
-            incident.IncidentPriorityId,
-            incident.Title,
-            incident.Description,
-            incident.LocationName,
-            Latitude = incident.Location?.Y,
-            Longitude = incident.Location?.X,
-            incident.UpdatedAt
-        });
+
 
         return Ok(new { message = "Incident updated successfully", incidentId = id });
     }
@@ -231,21 +203,7 @@ public class IncidentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Broadcast update via SignalR
-        await _hubContext.Clients.All.SendAsync("ReceiveIncidentUpdate", new
-        {
-            incident.IncidentId,
-            incident.IncidentStatusId,
-            incident.IncidentPriorityId,
-            incident.Title,
-            incident.Description,
-            incident.LocationName,
-            Latitude = incident.Location?.Y,
-            Longitude = incident.Location?.X,
-            incident.UpdatedAt,
-            AssignedVehiclePlate = vehicle.PlateNumber,
-            AssignedTo = incident.AssignedTo
-        });
+
 
         return Ok(new
         {

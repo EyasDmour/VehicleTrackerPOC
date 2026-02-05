@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using VehicleTracker.Api.Data;
-using VehicleTracker.Api.Hubs;
 using VehicleTracker.Api.Models;
 
 namespace VehicleTracker.Api.Controllers;
@@ -13,12 +11,10 @@ namespace VehicleTracker.Api.Controllers;
 public class LiveTrackingController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly IHubContext<EventsHub> _hubContext;
 
-    public LiveTrackingController(AppDbContext context, IHubContext<EventsHub> hubContext)
+    public LiveTrackingController(AppDbContext context)
     {
         _context = context;
-        _hubContext = hubContext;
     }
 
     /// <summary>
@@ -54,8 +50,8 @@ public class LiveTrackingController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Broadcast real-time location update via SignalR
-        var updatePayload = new RealTimeDataResponse
+        // Return the updated data in RealTimeDataResponse format
+        return Ok(new RealTimeDataResponse
         {
             VehicleId = realTimeData.VehicleId,
             VehicleStatusId = realTimeData.VehicleStatusId,
@@ -63,12 +59,7 @@ public class LiveTrackingController : ControllerBase
             Longitude = realTimeData.CurrentLocation?.X,
             CurrentSpeed = realTimeData.CurrentSpeed,
             CurrentFuel = realTimeData.CurrentFuel
-        };
-        
-        await _hubContext.Clients.All.SendAsync("ReceiveLocationUpdate", updatePayload);
-
-        // Return the updated data in RealTimeDataResponse format
-        return Ok(updatePayload);
+        });
     }
 
     /// <summary>
