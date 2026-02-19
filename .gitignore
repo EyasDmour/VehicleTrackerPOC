@@ -27,3 +27,12 @@ docker-compose.override.yml
 
 # Logs
 *.log
+
+# Documentation
+docs/
+
+# Agent skills
+.agents/
+
+# Python virtual environment
+.venv/
